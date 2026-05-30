@@ -707,7 +707,7 @@ export default function App() {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
-          const targets = { experience: 1, projects: 25, clients: 15, satisfaction: 99 };
+          const targets = { experience: 3, projects: 25, clients: 15, satisfaction: 99 };
           const duration = 2000;
           const start = performance.now();
 
