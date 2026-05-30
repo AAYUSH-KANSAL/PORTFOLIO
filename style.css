@@ -115,10 +115,10 @@ body:hover .cursor-glow {
    PARTICLES
    ============================================ */
 .particles {
-    position: fixed;
+    position: absolute;
     inset: 0;
     pointer-events: none;
-    z-index: 0;
+    z-index: 1;
     overflow: hidden;
 }
 
@@ -126,30 +126,104 @@ body:hover .cursor-glow {
     position: absolute;
     width: 3px;
     height: 3px;
-    background: var(--accent-light);
+    background: #ffffff;
     border-radius: 50%;
     opacity: 0;
-    animation: particleFloat 8s infinite;
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.7);
+    animation: particleFloat 8s infinite linear;
+}
+
+/* Mix of white and colored/glowing dots */
+.particle:nth-child(even) {
+    background: var(--accent-light);
+    box-shadow: 0 0 8px rgba(139, 92, 246, 0.6);
 }
 
 @keyframes particleFloat {
     0% {
         opacity: 0;
-        transform: translateY(100vh) scale(0);
+        top: 100%;
+        transform: scale(0.3);
     }
 
     10% {
-        opacity: 0.6;
+        opacity: 0.8;
     }
 
     90% {
-        opacity: 0.6;
+        opacity: 0.8;
     }
 
     100% {
         opacity: 0;
-        transform: translateY(-10vh) scale(1);
+        top: -5%;
+        transform: scale(1.2);
     }
+}
+
+/* ============================================
+   SCROLL REVEAL ANIMATIONS
+   ============================================ */
+.reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity, transform;
+}
+
+.reveal.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.reveal-zoom {
+    opacity: 0;
+    transform: scale(0.95);
+    transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity, transform;
+}
+
+.reveal-zoom.active {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.reveal-slide-left {
+    opacity: 0;
+    transform: translateX(-40px);
+    transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity, transform;
+}
+
+.reveal-slide-left.active {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.reveal-slide-right {
+    opacity: 0;
+    transform: translateX(40px);
+    transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity, transform;
+}
+
+.reveal-slide-right.active {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.reveal-fade {
+    opacity: 0;
+    transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity;
+}
+
+.reveal-fade.active {
+    opacity: 1;
 }
 
 /* ============================================
@@ -464,6 +538,75 @@ body:hover .cursor-glow {
         linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
     background-size: 60px 60px;
     mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 30%, transparent 100%);
+}
+
+/* Reusable animated grid background for all sections */
+.section-grid-bg {
+    position: absolute;
+    inset: -60px 0;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+    background-size: 55px 55px;
+    mask-image: radial-gradient(ellipse 70% 50% at 50% 50%, black 20%, transparent 100%);
+    pointer-events: none;
+    z-index: 0;
+    animation: gridShift 20s linear infinite;
+    transform: translateY(calc(var(--scroll-y, 0px) * -0.05));
+    will-change: transform;
+}
+
+@keyframes gridShift {
+    0% { background-position: 0 0; }
+    100% { background-position: 55px 55px; }
+}
+
+/* Floating particle dots — Layer 1 (slow, large drift) */
+.section-grid-bg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        radial-gradient(1.5px 1.5px at 10% 15%, rgba(255,255,255,0.25), transparent),
+        radial-gradient(1px 1px at 25% 45%, rgba(255,255,255,0.2), transparent),
+        radial-gradient(1.5px 1.5px at 50% 20%, rgba(255,255,255,0.18), transparent),
+        radial-gradient(1px 1px at 70% 60%, rgba(255,255,255,0.22), transparent),
+        radial-gradient(1.5px 1.5px at 85% 30%, rgba(255,255,255,0.2), transparent),
+        radial-gradient(1px 1px at 40% 75%, rgba(255,255,255,0.15), transparent),
+        radial-gradient(1.5px 1.5px at 60% 85%, rgba(255,255,255,0.2), transparent),
+        radial-gradient(1px 1px at 15% 90%, rgba(255,255,255,0.18), transparent),
+        radial-gradient(1.5px 1.5px at 90% 80%, rgba(255,255,255,0.22), transparent),
+        radial-gradient(1px 1px at 35% 10%, rgba(255,255,255,0.15), transparent);
+    background-size: 300px 300px;
+    animation: particleDrift1 25s linear infinite;
+}
+
+/* Floating particle dots — Layer 2 (faster, offset drift) */
+.section-grid-bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        radial-gradient(1px 1px at 5% 35%, rgba(139,92,246,0.25), transparent),
+        radial-gradient(1.5px 1.5px at 30% 65%, rgba(255,255,255,0.15), transparent),
+        radial-gradient(1px 1px at 55% 40%, rgba(236,72,153,0.18), transparent),
+        radial-gradient(1.5px 1.5px at 75% 15%, rgba(255,255,255,0.2), transparent),
+        radial-gradient(1px 1px at 95% 55%, rgba(139,92,246,0.2), transparent),
+        radial-gradient(1.5px 1.5px at 20% 80%, rgba(255,255,255,0.18), transparent),
+        radial-gradient(1px 1px at 45% 95%, rgba(255,255,255,0.12), transparent),
+        radial-gradient(1.5px 1.5px at 80% 70%, rgba(236,72,153,0.15), transparent);
+    background-size: 350px 350px;
+    animation: particleDrift2 18s linear infinite;
+}
+
+@keyframes particleDrift1 {
+    0% { background-position: 0 0; }
+    100% { background-position: -300px 300px; }
+}
+
+@keyframes particleDrift2 {
+    0% { background-position: 0 0; }
+    100% { background-position: 350px -350px; }
 }
 
 .gradient-orb {
@@ -1200,6 +1343,8 @@ body:hover .cursor-glow {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    position: relative;
+    z-index: 3;
 }
 
 .section-badge {
@@ -2073,6 +2218,67 @@ body:hover .cursor-glow {
     background: var(--bg-secondary);
     border-top: 1px solid var(--border);
     position: relative;
+    overflow: hidden;
+}
+
+/* Decorative background orbs */
+.contact-bg-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(120px);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.contact-orb-1 {
+    width: 450px;
+    height: 450px;
+    background: rgba(139, 92, 246, 0.12);
+    top: -15%;
+    right: -5%;
+    animation: contactOrbFloat 18s ease-in-out infinite;
+}
+
+.contact-orb-2 {
+    width: 350px;
+    height: 350px;
+    background: rgba(236, 72, 153, 0.08);
+    bottom: -10%;
+    left: -5%;
+    animation: contactOrbFloat 18s ease-in-out infinite reverse;
+}
+
+@keyframes contactOrbFloat {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(30px, -25px) scale(1.08); }
+}
+
+/* Grid line background texture */
+.contact-grid-lines {
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+    background-size: 50px 50px;
+    mask-image: radial-gradient(ellipse 70% 50% at 50% 50%, black 20%, transparent 100%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Subtitle under section header */
+.contact-subtitle {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    max-width: 520px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.contact .section-header {
+    position: relative;
+    z-index: 3;
 }
 
 .contact-container {
@@ -2081,100 +2287,297 @@ body:hover .cursor-glow {
     padding: 0 32px;
     display: grid;
     grid-template-columns: 1fr 1.2fr;
-    gap: 80px;
+    gap: 60px;
+    position: relative;
+    z-index: 3;
 }
 
+/* ---- LEFT: Contact Info ---- */
 .contact-info {
     display: flex;
     flex-direction: column;
-    gap: 32px;
+    gap: 28px;
 }
 
-.contact-desc {
-    font-size: 1.1rem;
-    line-height: 1.7;
-    color: var(--text-secondary);
-}
-
-.contact-details {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-}
-
-.contact-item {
+/* Availability Card */
+.contact-availability-card {
     display: flex;
     align-items: center;
     gap: 16px;
+    padding: 18px 24px;
+    background: rgba(34, 197, 94, 0.06);
+    border: 1px solid rgba(34, 197, 94, 0.15);
+    border-radius: var(--radius-lg);
+    transition: all 0.3s ease;
 }
 
-.contact-icon {
+.contact-availability-card:hover {
+    background: rgba(34, 197, 94, 0.1);
+    border-color: rgba(34, 197, 94, 0.25);
+    transform: translateY(-2px);
+}
+
+.availability-pulse-ring {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.availability-pulse-ring::before {
+    content: '';
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(34, 197, 94, 0.15);
+    animation: availPulse 2.5s ease-in-out infinite;
+}
+
+.availability-dot {
+    width: 14px;
+    height: 14px;
+    background: #22c55e;
+    border-radius: 50%;
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 0 12px rgba(34, 197, 94, 0.5);
+}
+
+@keyframes availPulse {
+    0%, 100% { transform: scale(1); opacity: 0.6; }
+    50% { transform: scale(1.6); opacity: 0; }
+}
+
+.availability-status {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #22c55e;
+    letter-spacing: 0.02em;
+}
+
+.availability-detail {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+
+/* Contact Detail Cards */
+.contact-details {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.contact-card-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 20px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    transition: all 0.35s var(--ease-spring);
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    position: relative;
+    overflow: hidden;
+}
+
+.contact-card-item::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.06), transparent 60%);
+    opacity: 0;
+    transition: opacity 0.35s ease;
+}
+
+.contact-card-item:hover::before {
+    opacity: 1;
+}
+
+.contact-card-item:hover {
+    border-color: rgba(139, 92, 246, 0.25);
+    transform: translateX(6px);
+    box-shadow: 0 4px 20px rgba(139, 92, 246, 0.08);
+}
+
+.contact-card-icon {
     width: 48px;
     height: 48px;
     border-radius: var(--radius-md);
-    background: rgba(139, 92, 246, 0.05);
+    background: rgba(139, 92, 246, 0.08);
     color: var(--accent-light);
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.35s ease;
 }
 
-.contact-icon svg {
-    width: 20px;
-    height: 20px;
+.contact-card-item:hover .contact-card-icon {
+    background: rgba(139, 92, 246, 0.15);
+    transform: scale(1.05);
 }
 
-.contact-meta p:first-child {
-    font-size: 0.75rem;
+.contact-card-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.contact-card-label {
+    font-size: 0.72rem;
+    font-weight: 500;
     color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
 }
 
-.contact-meta p:last-child {
-    font-size: 1rem;
+.contact-card-value {
+    font-size: 0.95rem;
     font-weight: 500;
     color: var(--text-primary);
+    margin-top: 2px;
+}
+
+.contact-card-arrow {
+    color: var(--text-muted);
+    opacity: 0;
+    transform: translate(-8px, 8px);
+    transition: all 0.35s var(--ease-spring);
+    flex-shrink: 0;
+}
+
+.contact-card-item:hover .contact-card-arrow {
+    opacity: 1;
+    transform: translate(0, 0);
+    color: var(--accent-light);
+}
+
+/* Social Links */
+.contact-socials {
+    margin-top: 8px;
+}
+
+.contact-socials-label {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 14px;
 }
 
 .social-links {
     display: flex;
-    gap: 12px;
-    margin-top: 16px;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
 .social-link {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    justify-content: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: var(--radius-full);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border);
     color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 500;
     transition: all 0.3s var(--ease-spring);
+    text-decoration: none;
+}
+
+.social-link svg {
+    width: 18px;
+    height: 18px;
+    transition: transform 0.3s var(--ease-spring);
 }
 
 .social-link:hover {
-    color: var(--accent);
-    border-color: var(--accent);
+    color: var(--accent-light);
+    border-color: rgba(139, 92, 246, 0.3);
+    background: rgba(139, 92, 246, 0.08);
     transform: translateY(-3px);
-    box-shadow: 0 4px 15px var(--accent-glow);
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.12);
+}
+
+.social-link:hover svg {
+    transform: scale(1.15);
+}
+
+/* ---- RIGHT: Form Wrapper ---- */
+.contact-form-wrapper {
+    position: relative;
+}
+
+.contact-form-glow {
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: conic-gradient(
+        from 180deg at 50% 50%,
+        rgba(139, 92, 246, 0.3),
+        rgba(236, 72, 153, 0.15),
+        rgba(6, 182, 212, 0.15),
+        rgba(139, 92, 246, 0.3)
+    );
+    border-radius: calc(var(--radius-xl) + 2px);
+    filter: blur(1px);
+    opacity: 0.5;
+    transition: opacity 0.5s ease;
+    animation: formGlowRotate 8s linear infinite;
+    z-index: 0;
+}
+
+@keyframes formGlowRotate {
+    0% { filter: blur(1px) hue-rotate(0deg); }
+    100% { filter: blur(1px) hue-rotate(360deg); }
+}
+
+.contact-form-wrapper:hover .contact-form-glow {
+    opacity: 0.8;
 }
 
 .contact-form {
+    position: relative;
     background: var(--bg-card);
-    border: 1px solid var(--border);
+    border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: var(--radius-xl);
-    padding: 48px;
+    padding: 44px;
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 22px;
+    z-index: 1;
+    backdrop-filter: blur(10px);
+}
+
+.contact-form-header h3 {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+}
+
+.contact-form-header p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
 }
 
 .form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 20px;
+    gap: 18px;
 }
 
 .form-group {
@@ -2184,14 +2587,16 @@ body:hover .cursor-glow {
 }
 
 .form-group label {
-    font-size: 0.8rem;
-    font-weight: 500;
+    font-size: 0.78rem;
+    font-weight: 600;
     color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
 }
 
 .form-group input,
 .form-group textarea {
-    background: rgba(255, 255, 255, 0.02);
+    background: rgba(255, 255, 255, 0.03);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     padding: 14px 18px;
@@ -2201,12 +2606,18 @@ body:hover .cursor-glow {
     transition: all 0.3s ease;
 }
 
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+    color: var(--text-muted);
+    opacity: 0.6;
+}
+
 .form-group input:focus,
 .form-group textarea:focus {
     outline: none;
     border-color: var(--accent);
-    background: rgba(255, 255, 255, 0.04);
-    box-shadow: 0 0 15px rgba(139, 92, 246, 0.1);
+    background: rgba(139, 92, 246, 0.04);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1), 0 0 20px rgba(139, 92, 246, 0.06);
 }
 
 .form-group textarea {
@@ -2214,14 +2625,109 @@ body:hover .cursor-glow {
     min-height: 120px;
 }
 
+/* Submit Button */
+.contact-submit-btn {
+    position: relative;
+    width: 100%;
+    padding: 16px 32px;
+    border: none;
+    border-radius: var(--radius-md);
+    background: var(--gradient-1);
+    color: white;
+    font-family: var(--font-main);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.4s var(--ease-spring);
+    margin-top: 4px;
+}
+
+.contact-submit-btn .btn-content {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    position: relative;
+    z-index: 1;
+}
+
+.contact-submit-btn .btn-shimmer {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+    transition: left 0.6s ease;
+}
+
+.contact-submit-btn:hover .btn-shimmer {
+    left: 100%;
+}
+
+.contact-submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(139, 92, 246, 0.35);
+}
+
+.contact-submit-btn:active {
+    transform: translateY(0) scale(0.98);
+}
+
+.contact-submit-btn.submitted {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    pointer-events: none;
+}
+
+.contact-submit-btn.submitted:hover {
+    transform: none;
+    box-shadow: 0 4px 20px rgba(34, 197, 94, 0.3);
+}
+
+.contact-submit-btn:disabled {
+    cursor: not-allowed;
+}
+
+.contact-submit-btn.sending {
+    opacity: 0.85;
+    pointer-events: none;
+}
+
+.btn-spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
 /* ============================================
    FOOTER
    ============================================ */
 .footer {
-    padding: 60px 0;
+    padding: 80px 0 40px;
     border-top: 1px solid var(--border);
     background: var(--bg-primary);
     position: relative;
+    overflow: hidden;
+}
+
+.footer-glow-orb {
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(139, 92, 246, 0.08), transparent 70%);
+    top: -40%;
+    left: 50%;
+    transform: translateX(-50%);
+    pointer-events: none;
+    filter: blur(60px);
 }
 
 .footer-container {
@@ -2229,19 +2735,124 @@ body:hover .cursor-glow {
     margin: 0 auto;
     padding: 0 32px;
     display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+    position: relative;
+    z-index: 3;
+}
+
+/* Footer CTA */
+.footer-cta {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+}
+
+.footer-cta-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.8rem, 4vw, 3rem);
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+}
+
+.footer-gradient-text {
+    background: var(--gradient-1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.footer-cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 28px;
+    border-radius: var(--radius-full);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.35s var(--ease-spring);
+}
+
+.footer-cta-btn svg {
+    transition: transform 0.35s var(--ease-spring);
+}
+
+.footer-cta-btn:hover {
+    color: var(--accent-light);
+    border-color: rgba(139, 92, 246, 0.3);
+    background: rgba(139, 92, 246, 0.08);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(139, 92, 246, 0.15);
+}
+
+.footer-cta-btn:hover svg {
+    transform: translate(3px, -3px);
+}
+
+/* Footer Socials */
+.footer-socials {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.footer-socials a {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    transition: all 0.3s var(--ease-spring);
+    text-decoration: none;
+}
+
+.footer-socials a:hover {
+    color: var(--accent-light);
+    border-color: rgba(139, 92, 246, 0.35);
+    background: rgba(139, 92, 246, 0.1);
+    transform: translateY(-4px);
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.15);
+}
+
+/* Footer Divider */
+.footer-divider {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.2), rgba(236, 72, 153, 0.15), transparent);
+}
+
+/* Footer Bottom Bar */
+.footer-bottom {
+    width: 100%;
+    display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
-    gap: 32px;
+    gap: 20px;
 }
 
 .footer-logo {
     font-family: var(--font-mono);
     font-size: 1.1rem;
     font-weight: 600;
+    text-decoration: none;
+    color: inherit;
 }
 
-.footer-links {
+.footer-nav {
     display: flex;
     gap: 24px;
 }
@@ -2250,15 +2861,58 @@ body:hover .cursor-glow {
     font-size: 0.85rem;
     color: var(--text-secondary);
     transition: color 0.3s ease;
+    text-decoration: none;
+    position: relative;
+}
+
+.footer-link::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    width: 0;
+    height: 1.5px;
+    background: var(--accent);
+    transition: width 0.3s var(--ease-spring);
 }
 
 .footer-link:hover {
     color: var(--text-primary);
 }
 
+.footer-link:hover::after {
+    width: 100%;
+}
+
 .footer-copy {
     font-size: 0.8rem;
     color: var(--text-muted);
+}
+
+/* Back to Top */
+.back-to-top {
+    position: absolute;
+    bottom: 0;
+    right: 32px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.35s var(--ease-spring);
+}
+
+.back-to-top:hover {
+    color: var(--accent-light);
+    border-color: rgba(139, 92, 246, 0.3);
+    background: rgba(139, 92, 246, 0.08);
+    transform: translateY(-4px);
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.12);
 }
 
 /* ============================================
@@ -2289,12 +2943,56 @@ body:hover .cursor-glow {
     }
 
     .contact-form {
-        padding: 32px;
+        padding: 28px 22px;
     }
 
-    .footer-container {
+    .contact-submit-btn {
+        padding: 14px 24px;
+        font-size: 0.9rem;
+    }
+
+    .contact-availability-card {
+        padding: 14px 18px;
+    }
+
+    .social-links {
+        gap: 8px;
+    }
+
+    .social-link {
+        padding: 8px 14px;
+        font-size: 0.75rem;
+    }
+
+    .contact-subtitle {
+        font-size: 0.95rem;
+    }
+
+    .footer-bottom {
         flex-direction: column;
         text-align: center;
+        gap: 16px;
+    }
+
+    .footer-nav {
+        gap: 16px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .footer-cta-title {
+        font-size: 1.6rem;
+    }
+
+    .footer-cta-btn {
+        font-size: 0.8rem;
+        padding: 12px 22px;
+    }
+
+    .back-to-top {
+        position: relative;
+        right: auto;
+        margin-top: -10px;
     }
 }
 

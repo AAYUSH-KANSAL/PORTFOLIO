@@ -76,7 +76,7 @@ function CircularProgress({ percent, label, isVisible }) {
 }
 
 // --- Service Card with Cursor-tracking Radial Glow ---
-function ServiceCard({ icon, title, description }) {
+function ServiceCard({ icon, title, description, index }) {
   const cardRef = useRef(null);
 
   const handleMouseMove = (e) => {
@@ -91,13 +91,56 @@ function ServiceCard({ icon, title, description }) {
   return (
     <div
       ref={cardRef}
-      className="service-card"
+      className="service-card reveal-zoom"
       onMouseMove={handleMouseMove}
+      style={{
+        transitionDelay: `${index * 0.12}s`
+      }}
     >
       <div className="service-glow" />
       <div className="service-icon">{icon}</div>
       <h4>{title}</h4>
       <p>{description}</p>
+    </div>
+  );
+}
+
+// --- Lazy Section Loading Wrapper Component ---
+function LazySection({ children, height = '400px' }) {
+  const [hasEntered, setHasEntered] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setHasEntered(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '150px 0px' }
+    );
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (hasEntered && ref.current) {
+      const els = ref.current.querySelectorAll(
+        '.reveal, .reveal-zoom, .reveal-slide-left, .reveal-slide-right, .reveal-fade'
+      );
+      const timer = setTimeout(() => {
+        els.forEach((el) => el.classList.add('active'));
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [hasEntered]);
+
+  return (
+    <div ref={ref} style={!hasEntered ? { minHeight: height } : {}}>
+      {hasEntered ? children : null}
     </div>
   );
 }
@@ -256,7 +299,7 @@ function ProjectStatsCounter({ target, label, prefix = '', suffix = '', isVisibl
 }
 
 // --- Custom Project Card Component ---
-function ProjectCard({ project, isVisible }) {
+function ProjectCard({ project, isVisible, index }) {
   const cardRef = useRef(null);
 
   const handleMouseMove = (e) => {
@@ -273,7 +316,10 @@ function ProjectCard({ project, isVisible }) {
       ref={cardRef}
       onMouseMove={handleMouseMove}
       className={`portfolio-project-card ${project.isFeatured ? 'featured' : ''} ${isVisible ? 'revealed' : ''}`}
-      style={{ '--project-accent': project.accent }}
+      style={{
+        '--project-accent': project.accent,
+        transitionDelay: isVisible ? `${index * 0.15}s` : '0s'
+      }}
     >
       <div className="portfolio-project-glow" />
       <div className="portfolio-project-visual">
@@ -427,10 +473,19 @@ export default function App() {
             if (entry.target === projectsSecRef.current) {
               setProjectsVisible(true);
             }
+            if (
+              entry.target.classList.contains('reveal') ||
+              entry.target.classList.contains('reveal-zoom') ||
+              entry.target.classList.contains('reveal-slide-left') ||
+              entry.target.classList.contains('reveal-slide-right') ||
+              entry.target.classList.contains('reveal-fade')
+            ) {
+              entry.target.classList.add('active');
+            }
           }
         });
       },
-      { threshold: 0.15 }
+      { threshold: 0.08, rootMargin: '0px 0px -50px 0px' }
     );
     if (aboutRef.current) {
       observer.observe(aboutRef.current);
@@ -438,6 +493,13 @@ export default function App() {
     if (projectsSecRef.current) {
       observer.observe(projectsSecRef.current);
     }
+
+    // Select and observe all reveal elements
+    const revealEls = document.querySelectorAll(
+      '.reveal, .reveal-zoom, .reveal-slide-left, .reveal-slide-right, .reveal-fade'
+    );
+    revealEls.forEach((el) => observer.observe(el));
+
     return () => observer.disconnect();
   }, []);
 
@@ -535,6 +597,7 @@ export default function App() {
 
     // Keep active section and navbar scroll state synced with Lenis scroll events
     lenis.on('scroll', (e) => {
+      document.documentElement.style.setProperty('--scroll-y', `${e.scroll}px`);
       setIsScrolled(e.scroll > 50);
 
       const sections = ['hero', 'about', 'work', 'contact'];
@@ -678,7 +741,7 @@ export default function App() {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
-          const targets = { experience: 3, projects: 25, clients: 15, satisfaction: 99 };
+          const targets = { experience: 1, projects: 25, clients: 15, satisfaction: 99 };
           const duration = 2000;
           const start = performance.now();
 
@@ -728,14 +791,40 @@ export default function App() {
     }
   };
 
-  // Form Submit Handler
-  const handleFormSubmit = (e) => {
+  // Form Submit Handler — Web3Forms Integration
+  const [formSending, setFormSending] = useState(false);
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
-    setFormSubmitted(true);
-    setTimeout(() => {
-      setFormState({ firstName: '', lastName: '', email: '', message: '' });
-      setFormSubmitted(false);
-    }, 3000);
+    setFormSending(true);
+
+    try {
+      const response = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          access_key: '2129a21f-961c-424b-bce0-15f9015eaad1',
+          from_name: `${formState.firstName} ${formState.lastName}`,
+          email: formState.email,
+          subject: `Portfolio Message from ${formState.firstName} ${formState.lastName}`,
+          message: formState.message,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setFormSubmitted(true);
+        setTimeout(() => {
+          setFormState({ firstName: '', lastName: '', email: '', message: '' });
+          setFormSubmitted(false);
+        }, 4000);
+      } else {
+        alert('Something went wrong. Please try again.');
+      }
+    } catch (error) {
+      alert('Network error. Please try again later.');
+    } finally {
+      setFormSending(false);
+    }
   };
 
   const handleInputChange = (e) => {
@@ -759,29 +848,13 @@ export default function App() {
         ))}
       </div>
 
-      {/* Floating Particles */}
-      <div className="particles">
-        {particles.map((p) => (
-          <div
-            key={p.id}
-            className="particle"
-            style={{
-              left: `${p.left}%`,
-              animationDelay: `${p.delay}s`,
-              animationDuration: `${p.duration}s`,
-              width: `${p.size}px`,
-              height: `${p.size}px`,
-            }}
-          />
-        ))}
-      </div>
 
       {/* Navigation */}
       <nav className={`navbar ${isScrolled ? 'scrolled' : ''}`}>
         <div className="nav-container">
           <a href="#" className="nav-logo" onClick={(e) => scrollToSection(e, 'hero')}>
             <span className="logo-bracket">&lt;</span>
-            <span className="logo-text">Ayush</span>
+            <span className="logo-text">Aayush</span>
             <span className="logo-bracket">/&gt;</span>
           </a>
           
@@ -882,12 +955,26 @@ export default function App() {
         </ul>
       </div>
 
-      {/* Hero Section */}
       <section className="hero" id="hero">
         <div className="hero-grid-bg"></div>
         <div className="gradient-orb orb-1"></div>
         <div className="gradient-orb orb-2"></div>
         <div className="gradient-orb orb-3"></div>
+        <div className="particles">
+          {particles.map((p) => (
+            <div
+              key={`hero-p-${p.id}`}
+              className="particle"
+              style={{
+                left: `${p.left}%`,
+                animationDelay: `${p.delay}s`,
+                animationDuration: `${p.duration}s`,
+                width: `${p.size}px`,
+                height: `${p.size}px`,
+              }}
+            />
+          ))}
+        </div>
 
         <div className="hero-container">
           {/* Left Content */}
@@ -1065,453 +1152,643 @@ export default function App() {
         </div>
       </section>
 
-      {/* About Section */}
       <section className="about" id="about" ref={aboutRef}>
         {/* Futuristic Background Continuation */}
         <div className="about-grid-bg"></div>
         <div className="about-glow-accent-1"></div>
         <div className="about-glow-accent-2"></div>
+        <div className="particles">
+          {particles.map((p) => (
+            <div
+              key={`about-p-${p.id}`}
+              className="particle"
+              style={{
+                left: `${p.left}%`,
+                animationDelay: `${p.delay}s`,
+                animationDuration: `${p.duration}s`,
+                width: `${p.size}px`,
+                height: `${p.size}px`,
+              }}
+            />
+          ))}
+        </div>
         
-        {/* Floating tech nodes/particles */}
-        <div className="about-ambient-particles">
-          <div className="about-particle part-1"></div>
-          <div className="about-particle part-2"></div>
-          <div className="about-particle part-3"></div>
-          <div className="about-particle part-4"></div>
-        </div>
-
-        <div className="section-header" style={{ position: 'relative', zIndex: 3 }}>
-          <span className="section-badge">01 // About Me</span>
-          <h2 className="section-title">Designing with purpose,<br />coding with precision.</h2>
-        </div>
-
-        <div className="about-container">
-          {/* Left Visual Card */}
-          <div
-            className="about-visual"
-            onMouseMove={handleCardMouseMove}
-            onMouseLeave={handleCardMouseLeave}
-            style={tiltStyle}
-          >
-            <div className="about-card">
-              <div className="about-avatar-container">
-                <div className="about-avatar-wrapper">
-                  <div className="about-avatar">A</div>
-                  <div className="avatar-ring ring-1"></div>
-                  <div className="avatar-ring ring-2"></div>
-                  <div className="avatar-dot dot-1"></div>
-                  <div className="avatar-dot dot-2"></div>
-                </div>
-                <div className="about-meta">
-                  <h3>Ayush</h3>
-                  <p>Creative Web Developer</p>
-                </div>
-              </div>
-
-              <div className="about-stats-grid">
-                <CircularProgress
-                  percent={95}
-                  label="UX/UI Design"
-                  isVisible={aboutVisible}
-                />
-                <CircularProgress
-                  percent={98}
-                  label="Development"
-                  isVisible={aboutVisible}
-                />
-              </div>
-            </div>
+        <LazySection height="600px">
+          {/* Floating tech nodes/particles */}
+          <div className="about-ambient-particles">
+            <div className="about-particle part-1"></div>
+            <div className="about-particle part-2"></div>
+            <div className="about-particle part-3"></div>
+            <div className="about-particle part-4"></div>
           </div>
 
-          {/* Right Text */}
-          <div className="about-text">
-            <p className="about-bio">
-              I am a developer who believes that beautiful designs deserve exceptional code. I specialize in bridging the gap between design systems and complex interactive layouts. By blending WebGL, Spline, and custom React architectures, I bring flat pixels into responsive, three-dimensional reality.
-            </p>
+          <div className="section-header reveal" style={{ position: 'relative', zIndex: 3 }}>
+            <span className="section-badge">01 // About Me</span>
+            <h2 className="section-title">Designing with purpose,<br />coding with precision.</h2>
+          </div>
 
-            {/* Skills Matrix Tabs */}
-            <div className="about-skills-tabs">
-              <div className="tabs-header">
-                <button
-                  className={`tab-btn ${activeTab === 'web' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('web')}
-                >
-                  Web Dev
-                </button>
-                <button
-                  className={`tab-btn ${activeTab === 'app' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('app')}
-                >
-                  App Dev
-                </button>
-                <button
-                  className={`tab-btn ${activeTab === 'uiux' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('uiux')}
-                >
-                  UI/UX Design
-                </button>
-                <button
-                  className={`tab-btn ${activeTab === 'ai' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('ai')}
-                >
-                  AI Tools
-                </button>
-              </div>
-
-              <div className="tab-content-grid">
-                {skillsData[activeTab].map((skill, idx) => (
-                  <div key={idx} className="skill-pill">
-                    <div className="skill-info">
-                      <span className="skill-name">{skill.name}</span>
-                      <span className="skill-pct">{skill.level}%</span>
-                    </div>
-                    <div className="skill-progress-bar-bg">
-                      <div
-                        className="skill-progress-bar-fill"
-                        style={{ width: aboutVisible ? `${skill.level}%` : '0%' }}
-                      />
-                    </div>
+          <div className="about-container">
+            {/* Left Visual Card */}
+            <div
+              className="about-visual reveal-slide-left"
+              onMouseMove={handleCardMouseMove}
+              onMouseLeave={handleCardMouseLeave}
+              style={tiltStyle}
+            >
+              <div className="about-card">
+                <div className="about-avatar-container">
+                  <div className="about-avatar-wrapper">
+                    <div className="about-avatar">A</div>
+                    <div className="avatar-ring ring-1"></div>
+                    <div className="avatar-ring ring-2"></div>
+                    <div className="avatar-dot dot-1"></div>
+                    <div className="avatar-dot dot-2"></div>
                   </div>
-                ))}
+                  <div className="about-meta">
+                    <h3>Aayush</h3>
+                    <p>Creative Web Developer</p>
+                  </div>
+                </div>
+
+                <div className="about-stats-grid">
+                  <CircularProgress
+                    percent={95}
+                    label="UX/UI Design"
+                    isVisible={aboutVisible}
+                  />
+                  <CircularProgress
+                    percent={98}
+                    label="Development"
+                    isVisible={aboutVisible}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Right Text */}
+            <div className="about-text reveal-slide-right">
+              <p className="aboutBio">
+                I am a developer who believes that beautiful designs deserve exceptional code. I specialize in bridging the gap between design systems and complex interactive layouts. By blending WebGL, Spline, and custom React architectures, I bring flat pixels into responsive, three-dimensional reality.
+              </p>
+
+              {/* Skills Matrix Tabs */}
+              <div className="about-skills-tabs">
+                <div className="tabs-header">
+                  <button
+                    className={`tab-btn ${activeTab === 'web' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('web')}
+                  >
+                    Web Dev
+                  </button>
+                  <button
+                    className={`tab-btn ${activeTab === 'app' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('app')}
+                  >
+                    App Dev
+                  </button>
+                  <button
+                    className={`tab-btn ${activeTab === 'uiux' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('uiux')}
+                  >
+                    UI/UX Design
+                  </button>
+                  <button
+                    className={`tab-btn ${activeTab === 'ai' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('ai')}
+                  >
+                    AI Tools
+                  </button>
+                </div>
+
+                <div className="tab-content-grid">
+                  {skillsData[activeTab].map((skill, idx) => (
+                    <div key={idx} className="skill-pill">
+                      <div className="skill-info">
+                        <span className="skill-name">{skill.name}</span>
+                        <span className="skill-pct">{skill.level}%</span>
+                      </div>
+                      <div className="skill-progress-bar-bg">
+                        <div
+                          className="skill-progress-bar-fill"
+                          style={{ width: aboutVisible ? `${skill.level}%` : '0%' }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Zone 2: Core Philosophy Asymmetrical Card Grid */}
-        <div className="about-pillars-header">
-          <span className="about-pillars-subtitle">Philosophy & Pillars</span>
-          <h3 className="about-pillars-title">The principles that power our execution</h3>
-        </div>
-
-        <div className="about-philosophy-grid">
-          {/* Card 1: Who We Are */}
-          <div className="philosophy-card span-2">
-            <h3>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--accent-light)' }}>
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                <circle cx="9" cy="7" r="4"></circle>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-              </svg>
-              Who We Are
-            </h3>
-            <p>
-              We are a collective of forward-thinking designers, code architects, and creative technologists. We reject traditional constraints to engineer digital systems that command attention and scale effortlessly.
-            </p>
+          {/* Zone 2: Core Philosophy Asymmetrical Card Grid */}
+          <div className="about-pillars-header reveal">
+            <span className="about-pillars-subtitle">Philosophy & Pillars</span>
+            <h3 className="about-pillars-title">The principles that power our execution</h3>
           </div>
 
-          {/* Card 2: Our Mission */}
-          <div className="philosophy-card span-2">
-            <h3>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#ec4899' }}>
-                <circle cx="12" cy="12" r="10"></circle>
-                <circle cx="12" cy="12" r="6"></circle>
-                <circle cx="12" cy="12" r="2"></circle>
-              </svg>
-              Our Mission
-            </h3>
-            <p>
-              To merge advanced interactive science-fiction aesthetics with production-ready software engineering. We turn flat interfaces into responsive, three-dimensional digital environments.
-            </p>
-          </div>
+          <div className="about-philosophy-grid">
+            {/* Card 1: Who We Are */}
+            <div className="philosophy-card span-2 reveal-zoom" style={{ transitionDelay: '0.1s' }}>
+              <h3>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--accent-light)' }}>
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                Who We Are
+              </h3>
+              <p>
+                We are a collective of forward-thinking designers, code architects, and creative technologists. We reject traditional constraints to engineer digital systems that command attention and scale effortlessly.
+              </p>
+            </div>
 
-          {/* Card 3: What We Do */}
-          <div className="philosophy-card span-2">
-            <h3>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#06b6d4' }}>
-                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-                <polyline points="2 17 12 22 22 17"></polyline>
-                <polyline points="2 12 17 22 12"></polyline>
-              </svg>
-              What We Do
-            </h3>
-            <p>
-              We craft high-performance web systems, reactive cross-platform mobile apps, bespoke design tokens, and next-generation AI agent automation workflows that streamline execution.
-            </p>
-          </div>
+            {/* Card 2: Our Mission */}
+            <div className="philosophy-card span-2 reveal-zoom" style={{ transitionDelay: '0.2s' }}>
+              <h3>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#ec4899' }}>
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <circle cx="12" cy="12" r="6"></circle>
+                  <circle cx="12" cy="12" r="2"></circle>
+                </svg>
+                Our Mission
+              </h3>
+              <p>
+                To merge advanced interactive science-fiction aesthetics with production-ready software engineering. We turn flat interfaces into responsive, three-dimensional digital environments.
+              </p>
+            </div>
 
-          {/* Card 4: Why Choose Us */}
-          <div className="philosophy-card span-3">
-            <h3>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#f59e0b' }}>
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-              </svg>
-              Why Choose Us
-            </h3>
-            <p>
-              We design with pixel-perfection and deploy using light, hardware-accelerated codebases. By utilizing CSS properties over heavy JS runtimes, our sites load instantly and feel premium.
-            </p>
-          </div>
+            {/* Card 3: What We Do */}
+            <div className="philosophy-card span-2 reveal-zoom" style={{ transitionDelay: '0.3s' }}>
+              <h3>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#06b6d4' }}>
+                  <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                  <polyline points="2 17 12 22 22 17"></polyline>
+                  <polyline points="2 12 17 22 12"></polyline>
+                </svg>
+                What We Do
+              </h3>
+              <p>
+                We craft high-performance web systems, reactive cross-platform mobile apps, bespoke design tokens, and next-generation AI agent automation workflows that streamline execution.
+              </p>
+            </div>
 
-          {/* Card 5: Our Approach */}
-          <div className="philosophy-card span-3">
-            <h3>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#10b981' }}>
-                <polyline points="4 17 10 11 4 5"></polyline>
-                <line x1="12" y1="19" x2="20" y2="19"></line>
-              </svg>
-              Our Approach
-            </h3>
-            <p>
-              Rigor meets creativity. We map user journeys, iterate rapidly using custom UI components, integrate modern AI capabilities, and test thoroughly to ensure perfect performance across devices.
-            </p>
-          </div>
-        </div>
+            {/* Card 4: Why Choose Us */}
+            <div className="philosophy-card span-3 reveal-zoom" style={{ transitionDelay: '0.4s' }}>
+              <h3>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#f59e0b' }}>
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+                Why Choose Us
+              </h3>
+              <p>
+                We design with pixel-perfection and deploy using light, hardware-accelerated codebases. By utilizing CSS properties over heavy JS runtimes, our sites load instantly and feel premium.
+              </p>
+            </div>
 
-        {/* Zone 3: Services Grid */}
-        <div className="about-services-header">
-          <span className="about-pillars-subtitle">Core Capabilities</span>
-          <h3 className="about-pillars-title">The tools and skillsets we deploy daily</h3>
-        </div>
-
-        <div className="about-container" style={{ marginTop: 0 }}>
-          <div className="about-text" style={{ width: '100%', maxWidth: '100%', gridColumn: 'span 2' }}>
-            <div className="services-grid">
-              <ServiceCard
-                icon={
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-                    <polyline points="2 17 12 22 22 17"></polyline>
-                    <polyline points="2 12 17 22 12"></polyline>
-                  </svg>
-                }
-                title="3D Integrations"
-                description="Embedding high-fidelity 3D assets & micro-interactions with WebGL & Spline APIs."
-              />
-
-              <ServiceCard
-                icon={
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-                    <line x1="8" y1="21" x2="16" y2="21"></line>
-                    <line x1="12" y1="17" x2="12" y2="21"></line>
-                  </svg>
-                }
-                title="Frontend Architecture"
-                description="Writing highly performant, modular React components using clean states and props."
-              />
-
-              <ServiceCard
-                icon={
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-                    <path d="M2 12h20"></path>
-                  </svg>
-                }
-                title="UI/UX Strategy"
-                description="Wireframing and refining complex application flows to maximize visitor engagement."
-              />
-
-              <ServiceCard
-                icon={
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <polyline points="12 6 12 12 16 14"></polyline>
-                  </svg>
-                }
-                title="Creative Coding"
-                description="Adding smooth animation timelines, hover logic, and user responsive layouts."
-              />
+            {/* Card 5: Our Approach */}
+            <div className="philosophy-card span-3 reveal-zoom" style={{ transitionDelay: '0.5s' }}>
+              <h3>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#10b981' }}>
+                  <polyline points="4 17 10 11 4 5"></polyline>
+                  <line x1="12" y1="19" x2="20" y2="19"></line>
+                </svg>
+                Our Approach
+              </h3>
+              <p>
+                Rigor meets creativity. We map user journeys, iterate rapidly using custom UI components, integrate modern AI capabilities, and test thoroughly to ensure perfect performance across devices.
+              </p>
             </div>
           </div>
-        </div>
+
+          {/* Zone 3: Services Grid */}
+          <div className="about-services-header reveal">
+            <span className="about-pillars-subtitle">Core Capabilities</span>
+            <h3 className="about-pillars-title">The tools and skillsets we deploy daily</h3>
+          </div>
+
+          <div className="about-container" style={{ marginTop: 0 }}>
+            <div className="about-text" style={{ width: '100%', maxWidth: '100%', gridColumn: 'span 2' }}>
+              <div className="services-grid">
+                <ServiceCard
+                  index={0}
+                  icon={
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                      <polyline points="2 17 12 22 22 17"></polyline>
+                      <polyline points="2 12 17 22 12"></polyline>
+                    </svg>
+                  }
+                  title="3D Integrations"
+                  description="Embedding high-fidelity 3D assets & micro-interactions with WebGL & Spline APIs."
+                />
+
+                <ServiceCard
+                  index={1}
+                  icon={
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                      <line x1="8" y1="21" x2="16" y2="21"></line>
+                      <line x1="12" y1="17" x2="12" y2="21"></line>
+                    </svg>
+                  }
+                  title="Frontend Architecture"
+                  description="Writing highly performant, modular React components using clean states and props."
+                />
+
+                <ServiceCard
+                  index={2}
+                  icon={
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                      <path d="M2 12h20"></path>
+                    </svg>
+                  }
+                  title="UI/UX Strategy"
+                  description="Wireframing and refining complex application flows to maximize visitor engagement."
+                />
+
+                <ServiceCard
+                  index={3}
+                  icon={
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                  }
+                  title="Creative Coding"
+                  description="Adding smooth animation timelines, hover logic, and user responsive layouts."
+                />
+              </div>
+            </div>
+          </div>
+        </LazySection>
       </section>
 
-      {/* Work Section */}
       <section className="work" id="work" ref={projectsSecRef}>
         {/* Glow ambient background assets */}
         <div className="projects-ambient-glow-1"></div>
         <div className="projects-ambient-glow-2"></div>
-        
-        <div className="section-header">
-          <span className="section-badge">02 // Selected Projects</span>
-          <h2 className="section-title">Bringing concepts to life<br />through code.</h2>
-          
-          {/* Animated Project Stats Counters */}
-          <div className="projects-stats-row">
-            <ProjectStatsCounter target={5} label="Production Systems" isVisible={projectsVisible} />
-            <ProjectStatsCounter target={2} label="Featured AI/SaaS Apps" isVisible={projectsVisible} />
-            <ProjectStatsCounter target={450} label="GitHub Commits" suffix="+" isVisible={projectsVisible} />
-            <ProjectStatsCounter target={100} label="Deployment Success" suffix="%" isVisible={projectsVisible} />
-          </div>
-        </div>
-
-        <div className="portfolio-projects-grid">
-          {projectsData.map((project) => (
-            <ProjectCard
-              key={project.id}
-              project={project}
-              isVisible={projectsVisible}
+        <div className="section-grid-bg"></div>
+        <div className="particles">
+          {particles.map((p) => (
+            <div
+              key={`work-p-${p.id}`}
+              className="particle"
+              style={{
+                left: `${p.left}%`,
+                animationDelay: `${p.delay}s`,
+                animationDuration: `${p.duration}s`,
+                width: `${p.size}px`,
+                height: `${p.size}px`,
+              }}
             />
           ))}
         </div>
+        <LazySection height="600px">
+          <div className="section-header reveal">
+            <span className="section-badge">02 // Selected Projects</span>
+            <h2 className="section-title">Bringing concepts to life<br />through code.</h2>
+            
+            {/* Animated Project Stats Counters */}
+            <div className="projects-stats-row">
+              <ProjectStatsCounter target={5} label="Production Systems" isVisible={projectsVisible} />
+              <ProjectStatsCounter target={2} label="Featured AI/SaaS Apps" isVisible={projectsVisible} />
+              <ProjectStatsCounter target={450} label="GitHub Commits" suffix="+" isVisible={projectsVisible} />
+              <ProjectStatsCounter target={100} label="Deployment Success" suffix="%" isVisible={projectsVisible} />
+            </div>
+          </div>
+
+          <div className="portfolio-projects-grid">
+            {projectsData.map((project, index) => (
+              <ProjectCard
+                key={project.id}
+                project={project}
+                isVisible={projectsVisible}
+                index={index}
+              />
+            ))}
+          </div>
+        </LazySection>
       </section>
 
-      {/* Contact Section */}
       <section className="contact" id="contact">
-        <div className="section-header">
-          <span className="section-badge">03 // Get In Touch</span>
-          <h2 className="section-title">Let's create something<br />exceptional together.</h2>
+        {/* Decorative background elements */}
+        <div className="contact-bg-orb contact-orb-1"></div>
+        <div className="contact-bg-orb contact-orb-2"></div>
+        <div className="contact-grid-lines"></div>
+        <div className="particles">
+          {particles.map((p) => (
+            <div
+              key={`contact-p-${p.id}`}
+              className="particle"
+              style={{
+                left: `${p.left}%`,
+                animationDelay: `${p.delay}s`,
+                animationDuration: `${p.duration}s`,
+                width: `${p.size}px`,
+                height: `${p.size}px`,
+              }}
+            />
+          ))}
         </div>
 
-        <div className="contact-container">
-          {/* Left details */}
-          <div className="contact-info">
-            <p className="contact-desc">
-              Have an exciting project, freelance opportunity, or just want to chat about 3D development? Drop me a message and let's get the conversation started.
-            </p>
+        <LazySection height="500px">
+          <div className="section-header reveal">
+            <span className="section-badge">03 // Get In Touch</span>
+            <h2 className="section-title">Let's create something<br />exceptional together.</h2>
+            <p className="contact-subtitle">Have an exciting project or just want to chat? I'd love to hear from you.</p>
+          </div>
 
-            <div className="contact-details">
-              <div className="contact-item">
-                <div className="contact-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                    <polyline points="22,6 12,13 2,6"></polyline>
-                  </svg>
+          <div className="contact-container">
+            {/* Left — Info cards */}
+            <div className="contact-info">
+              {/* Availability banner */}
+              <div className="contact-availability-card reveal-slide-left">
+                <div className="availability-pulse-ring">
+                  <span className="availability-dot"></span>
                 </div>
-                <div className="contact-meta">
-                  <p>Email Me</p>
-                  <p>hello@ayush.dev</p>
+                <div className="availability-text">
+                  <p className="availability-status">Available Now</p>
+                  <p className="availability-detail">Open for freelance projects & collaborations</p>
                 </div>
               </div>
 
-              <div className="contact-item">
-                <div className="contact-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                    <circle cx="12" cy="10" r="3"></circle>
-                  </svg>
-                </div>
-                <div className="contact-meta">
-                  <p>Location</p>
-                  <p>New Delhi, India</p>
-                </div>
+              {/* Contact detail cards */}
+              <div className="contact-details">
+                <a href="mailto:ayush.kansal321@gmail.com" className="contact-card-item reveal-slide-left" style={{ transitionDelay: '0.1s' }}>
+                  <div className="contact-card-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                      <polyline points="22,6 12,13 2,6"></polyline>
+                    </svg>
+                  </div>
+                  <div className="contact-card-text">
+                    <p className="contact-card-label">Email Me</p>
+                    <p className="contact-card-value">ayush.kansal321@gmail.com</p>
+                  </div>
+                  <div className="contact-card-arrow">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+                  </div>
+                </a>
+
+                <a href="https://maps.google.com/?q=Hapur+Uttar+Pradesh" target="_blank" rel="noopener noreferrer" className="contact-card-item reveal-slide-left" style={{ transitionDelay: '0.2s' }}>
+                  <div className="contact-card-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                      <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                  </div>
+                  <div className="contact-card-text">
+                    <p className="contact-card-label">Location</p>
+                    <p className="contact-card-value">Hapur, Uttar Pradesh</p>
+                  </div>
+                  <div className="contact-card-arrow">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+                  </div>
+                </a>
+
+                <a href="https://wa.me/918433055349?text=Hi%20Aayush!%20I%20visited%20your%20portfolio%20and%20would%20love%20to%20discuss%20a%20project%20with%20you." target="_blank" rel="noopener noreferrer" className="contact-card-item reveal-slide-left" style={{ transitionDelay: '0.3s' }}>
+                  <div className="contact-card-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                    </svg>
+                  </div>
+                  <div className="contact-card-text">
+                    <p className="contact-card-label">Chat on</p>
+                    <p className="contact-card-value">WhatsApp</p>
+                  </div>
+                  <div className="contact-card-arrow">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+                  </div>
+                </a>
               </div>
 
-              <div className="contact-item">
-                <div className="contact-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <polyline points="12 6 12 12 16 14"></polyline>
-                  </svg>
-                </div>
-                <div className="contact-meta">
-                  <p>Current Status</p>
-                  <p>Available for freelance contracts</p>
+              {/* Social Links */}
+              <div className="contact-socials reveal-slide-left" style={{ transitionDelay: '0.4s' }}>
+                <p className="contact-socials-label">Find me on</p>
+                <div className="social-links">
+                  <a href="https://github.com/AAYUSH-KANSAL/" target="_blank" rel="noopener noreferrer" className="social-link" aria-label="GitHub">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+                    </svg>
+                    <span>GitHub</span>
+                  </a>
+                  <a href="https://www.linkedin.com/in/aayush-kansal-85a173243/" target="_blank" rel="noopener noreferrer" className="social-link" aria-label="LinkedIn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+                      <rect x="2" y="9" width="4" height="12"></rect>
+                      <circle cx="4" cy="4" r="2"></circle>
+                    </svg>
+                    <span>LinkedIn</span>
+                  </a>
+                  <a href="https://x.com/AyushKansal321" target="_blank" rel="noopener noreferrer" className="social-link" aria-label="X (Twitter)">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path>
+                    </svg>
+                    <span>X</span>
+                  </a>
+                  <a href="https://www.instagram.com/AAYUSHKANSAL08" target="_blank" rel="noopener noreferrer" className="social-link" aria-label="Instagram">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                    </svg>
+                    <span>Instagram</span>
+                  </a>
+                  <a href="https://wa.me/918433055349" target="_blank" rel="noopener noreferrer" className="social-link" aria-label="WhatsApp">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                    </svg>
+                    <span>WhatsApp</span>
+                  </a>
                 </div>
               </div>
             </div>
 
-            {/* Social Icons */}
-            <div className="social-links">
-              <a href="#" className="social-link" onClick={(e) => e.preventDefault()} aria-label="GitHub">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
-                </svg>
-              </a>
-              <a href="#" className="social-link" onClick={(e) => e.preventDefault()} aria-label="LinkedIn">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
-                  <rect x="2" y="9" width="4" height="12"></rect>
-                  <circle cx="4" cy="4" r="2"></circle>
-                </svg>
-              </a>
-              <a href="#" className="social-link" onClick={(e) => e.preventDefault()} aria-label="Twitter">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path>
-                </svg>
-              </a>
+            {/* Right — Form */}
+            <div className="contact-form-wrapper reveal-slide-right">
+              <div className="contact-form-glow"></div>
+              <form className="contact-form" onSubmit={handleFormSubmit}>
+                <div className="contact-form-header">
+                  <h3>Send a Message</h3>
+                  <p>Fill out the form below and I'll get back to you within 24 hours.</p>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="firstName">First Name</label>
+                    <input
+                      type="text"
+                      id="firstName"
+                      name="firstName"
+                      value={formState.firstName}
+                      onChange={handleInputChange}
+                      required
+                      placeholder="John"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="lastName">Last Name</label>
+                    <input
+                      type="text"
+                      id="lastName"
+                      name="lastName"
+                      value={formState.lastName}
+                      onChange={handleInputChange}
+                      required
+                      placeholder="Doe"
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="email">Email Address</label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={formState.email}
+                    onChange={handleInputChange}
+                    required
+                    placeholder="john@example.com"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="message">Your Message</label>
+                  <textarea
+                    id="message"
+                    name="message"
+                    value={formState.message}
+                    onChange={handleInputChange}
+                    required
+                    placeholder="Tell me about your project..."
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className={`contact-submit-btn ${formSubmitted ? 'submitted' : ''} ${formSending ? 'sending' : ''}`}
+                  disabled={formSubmitted || formSending}
+                >
+                  <span className="btn-content">
+                    {formSending ? (
+                      <>
+                        <span className="btn-spinner"></span>
+                        Sending...
+                      </>
+                    ) : formSubmitted ? (
+                      <>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        Message Sent!
+                      </>
+                    ) : (
+                      <>
+                        Send Message
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                      </>
+                    )}
+                  </span>
+                  <span className="btn-shimmer"></span>
+                </button>
+              </form>
             </div>
           </div>
-
-          {/* Right form */}
-          <div>
-            <form className="contact-form" onSubmit={handleFormSubmit}>
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="firstName">First Name</label>
-                  <input
-                    type="text"
-                    id="firstName"
-                    name="firstName"
-                    value={formState.firstName}
-                    onChange={handleInputChange}
-                    required
-                    placeholder="John"
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="lastName">Last Name</label>
-                  <input
-                    type="text"
-                    id="lastName"
-                    name="lastName"
-                    value={formState.lastName}
-                    onChange={handleInputChange}
-                    required
-                    placeholder="Doe"
-                  />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="email">Email Address</label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formState.email}
-                  onChange={handleInputChange}
-                  required
-                  placeholder="john@example.com"
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="message">Your Message</label>
-                <textarea
-                  id="message"
-                  name="message"
-                  value={formState.message}
-                  onChange={handleInputChange}
-                  required
-                  placeholder="Tell me about your project..."
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="btn btn-primary"
-                style={{ width: '100%', justifyContent: 'center' }}
-                disabled={formSubmitted}
-              >
-                {formSubmitted ? 'Message Sent! ✓' : 'Send Message'}
-              </button>
-            </form>
-          </div>
-        </div>
+        </LazySection>
       </section>
 
-      {/* Footer Section */}
       <footer className="footer">
-        <div className="footer-container">
-          <a href="#" className="footer-logo" onClick={(e) => scrollToSection(e, 'hero')}>
-            <span className="logo-bracket">&lt;</span>
-            <span className="logo-text">Ayush</span>
-            <span className="logo-bracket">/&gt;</span>
-          </a>
+        <div className="footer-glow-orb"></div>
+        <div className="section-grid-bg"></div>
+        <div className="particles">
+          {particles.map((p) => (
+            <div
+              key={`footer-p-${p.id}`}
+              className="particle"
+              style={{
+                left: `${p.left}%`,
+                animationDelay: `${p.delay}s`,
+                animationDuration: `${p.duration}s`,
+                width: `${p.size}px`,
+                height: `${p.size}px`,
+              }}
+            />
+          ))}
+        </div>
 
-          <div className="footer-links">
-            <a href="#hero" className="footer-link" onClick={(e) => scrollToSection(e, 'hero')}>Home</a>
-            <a href="#about" className="footer-link" onClick={(e) => scrollToSection(e, 'about')}>About</a>
-            <a href="#work" className="footer-link" onClick={(e) => scrollToSection(e, 'work')}>Work</a>
-            <a href="#contact" className="footer-link" onClick={(e) => scrollToSection(e, 'contact')}>Contact</a>
+        <div className="footer-container">
+          {/* Top CTA Area */}
+          <div className="footer-cta reveal">
+            <h2 className="footer-cta-title">
+              Let's build something <span className="footer-gradient-text">amazing</span> together.
+            </h2>
+            <a href="mailto:ayush.kansal321@gmail.com" className="footer-cta-btn">
+              <span>ayush.kansal321@gmail.com</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+            </a>
           </div>
 
-          <p className="footer-copy">
-            &copy; {new Date().getFullYear()} Ayush. All rights reserved.
-          </p>
+          {/* Social Icons Row */}
+          <div className="footer-socials reveal-zoom">
+            <a href="https://github.com/AAYUSH-KANSAL/" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+              </svg>
+            </a>
+            <a href="https://www.linkedin.com/in/aayush-kansal-85a173243/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+                <rect x="2" y="9" width="4" height="12"></rect>
+                <circle cx="4" cy="4" r="2"></circle>
+              </svg>
+            </a>
+            <a href="https://x.com/AyushKansal321" target="_blank" rel="noopener noreferrer" aria-label="X">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path>
+              </svg>
+            </a>
+            <a href="https://www.instagram.com/AAYUSHKANSAL08" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+              </svg>
+            </a>
+            <a href="https://wa.me/918433055349?text=Hi%20Aayush!%20I%20visited%20your%20portfolio%20and%20would%20love%20to%20discuss%20a%20project%20with%20you." target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+              </svg>
+            </a>
+          </div>
+
+          {/* Divider */}
+          <div className="footer-divider"></div>
+
+          {/* Bottom Bar */}
+          <div className="footer-bottom">
+            <a href="#" className="footer-logo" onClick={(e) => scrollToSection(e, 'hero')}>
+              <span className="logo-bracket">&lt;</span>
+              <span className="logo-text">Aayush</span>
+              <span className="logo-bracket">/&gt;</span>
+            </a>
+
+            <div className="footer-nav">
+              <a href="#hero" className="footer-link" onClick={(e) => scrollToSection(e, 'hero')}>Home</a>
+              <a href="#about" className="footer-link" onClick={(e) => scrollToSection(e, 'about')}>About</a>
+              <a href="#work" className="footer-link" onClick={(e) => scrollToSection(e, 'work')}>Work</a>
+              <a href="#contact" className="footer-link" onClick={(e) => scrollToSection(e, 'contact')}>Contact</a>
+            </div>
+
+            <p className="footer-copy">
+              &copy; {new Date().getFullYear()} Aayush Kansal. All rights reserved.
+            </p>
+          </div>
+
+          {/* Back to top */}
+          <button className="back-to-top" onClick={(e) => scrollToSection(e, 'hero')} aria-label="Back to top">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="18 15 12 9 6 15"></polyline></svg>
+          </button>
         </div>
       </footer>
       <svg style={{ width: 0, height: 0, position: 'absolute' }}>
