@@ -3489,6 +3489,13 @@ body:hover .cursor-glow {
         padding: 0 16px !important;
     }
 
+    .about-bio {
+        text-align: justify;
+        text-justify: inter-word;
+        font-size: 1.15rem;
+        line-height: 1.75;
+    }
+
     .hero-title {
         font-size: clamp(2.2rem, 8vw, 3.2rem);
     }
