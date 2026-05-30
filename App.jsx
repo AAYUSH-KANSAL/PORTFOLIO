@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
-import Lenis from 'lenis';
+import { ReactLenis, useLenis } from 'lenis/react';
 import 'lenis/dist/lenis.css';
 import './style.css';
 
@@ -109,6 +109,36 @@ function ServiceCard({ icon, title, description, index }) {
 // --- Lazy Section Loading Wrapper Component ---
 function LazySection({ children }) {
   return <>{children}</>;
+}
+
+// --- Lenis Scroll Event and Sync Handler Component ---
+function ScrollHandler({ setIsScrolled, setActiveSection }) {
+  const lenis = useLenis((lenisInstance) => {
+    const scroll = lenisInstance.scroll;
+    document.documentElement.style.setProperty('--scroll-y', `${scroll}px`);
+    setIsScrolled(scroll > 50);
+
+    const sections = ['hero', 'about', 'work', 'contact'];
+    let current = 'hero';
+    for (const id of sections) {
+      const section = document.getElementById(id);
+      if (section && scroll >= section.offsetTop - 150) {
+        current = id;
+      }
+    }
+    setActiveSection(current);
+  });
+
+  useEffect(() => {
+    if (lenis) {
+      window.lenis = lenis;
+    }
+    return () => {
+      window.lenis = null;
+    };
+  }, [lenis]);
+
+  return null;
 }
 
 // --- Projects Data System ---
@@ -542,44 +572,7 @@ export default function App() {
   });
   const [formSubmitted, setFormSubmitted] = useState(false);
 
-  // Initialize Lenis Smooth Scroll
-  useEffect(() => {
-    const lenis = new Lenis({
-      autoRaf: true,
-      duration: 1.2,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      orientation: 'vertical',
-      gestureOrientation: 'vertical',
-      smoothWheel: true,
-      wheelMultiplier: 1,
-      smoothTouch: false,
-      syncTouch: false,
-    });
 
-    // Keep active section and navbar scroll state synced with Lenis scroll events
-    lenis.on('scroll', (e) => {
-      document.documentElement.style.setProperty('--scroll-y', `${e.scroll}px`);
-      setIsScrolled(e.scroll > 50);
-
-      const sections = ['hero', 'about', 'work', 'contact'];
-      let current = 'hero';
-      for (const id of sections) {
-        const section = document.getElementById(id);
-        if (section && e.scroll >= section.offsetTop - 150) {
-          current = id;
-        }
-      }
-      setActiveSection(current);
-    });
-
-    // Save lenis instance globally for smooth scrolling on link click
-    window.lenis = lenis;
-
-    return () => {
-      lenis.destroy();
-      window.lenis = null;
-    };
-  }, []);
 
   // Sliding Indicator Positioning Logic
   const updateIndicator = (element) => {
@@ -794,7 +787,21 @@ export default function App() {
   };
 
   return (
-    <>
+    <ReactLenis
+      root
+      options={{
+        autoRaf: true,
+        duration: 1.2,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        orientation: 'vertical',
+        gestureOrientation: 'vertical',
+        smoothWheel: true,
+        wheelMultiplier: 1,
+        smoothTouch: false,
+        syncTouch: false,
+      }}
+    >
+      <ScrollHandler setIsScrolled={setIsScrolled} setActiveSection={setActiveSection} />
       {/* Cursor Glow */}
       <div ref={glowRef} className="cursor-glow" />
 
@@ -1760,6 +1767,6 @@ export default function App() {
           </linearGradient>
         </defs>
       </svg>
-    </>
+    </ReactLenis>
   );
 }
