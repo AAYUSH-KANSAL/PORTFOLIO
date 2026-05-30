@@ -1195,7 +1195,7 @@ export default function App() {
 
             {/* Right Text */}
             <div className="about-text reveal-slide-right">
-              <p className="aboutBio">
+              <p className="about-bio">
                 I am a developer who believes that beautiful designs deserve exceptional code. I specialize in bridging the gap between design systems and complex interactive layouts. By blending WebGL, Spline, and custom React architectures, I bring flat pixels into responsive, three-dimensional reality.
               </p>
 
