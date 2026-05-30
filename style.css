@@ -44,13 +44,16 @@
 html {
     scroll-behavior: smooth;
     font-size: 16px;
+    overflow-x: hidden !important;
+    max-width: 100% !important;
 }
 
 body {
     font-family: var(--font-main);
     background: var(--bg-primary);
     color: var(--text-primary);
-    overflow-x: hidden;
+    overflow-x: hidden !important;
+    max-width: 100% !important;
     -webkit-font-smoothing: antialiased;
 }
 
@@ -3431,9 +3434,14 @@ body:hover .cursor-glow {
         gap: 12px;
     }
     
+    .hero {
+        overflow: hidden !important;
+    }
+    
     .hero-visual {
         height: 450px;
         margin-top: 20px;
+        overflow: hidden !important;
     }
     
     .spline-wrapper {
@@ -3447,6 +3455,23 @@ body:hover .cursor-glow {
 
 /* Mobile Responsive Tuning (max-width: 768px) */
 @media (max-width: 768px) {
+    /* Hide background particles to prevent CPU/GPU load & scrolling flickering */
+    .particles {
+        display: none !important;
+    }
+
+    /* Remove heavy backdrop blur layers on mobile to keep scrolling silky smooth */
+    .navbar,
+    .about-card,
+    .philosophy-card,
+    .portfolio-project-card,
+    .contact-availability-card,
+    .contact-form-wrapper {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        background: rgba(18, 18, 22, 0.96) !important;
+    }
+
     /* Navbar scale down */
     .navbar.scrolled {
         width: 95%;

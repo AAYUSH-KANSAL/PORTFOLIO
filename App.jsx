@@ -106,43 +106,8 @@ function ServiceCard({ icon, title, description, index }) {
 }
 
 // --- Lazy Section Loading Wrapper Component ---
-function LazySection({ children, height = '400px' }) {
-  const [hasEntered, setHasEntered] = useState(false);
-  const ref = useRef(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setHasEntered(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: '150px 0px' }
-    );
-    if (ref.current) {
-      observer.observe(ref.current);
-    }
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (hasEntered && ref.current) {
-      const els = ref.current.querySelectorAll(
-        '.reveal, .reveal-zoom, .reveal-slide-left, .reveal-slide-right, .reveal-fade'
-      );
-      const timer = setTimeout(() => {
-        els.forEach((el) => el.classList.add('active'));
-      }, 50);
-      return () => clearTimeout(timer);
-    }
-  }, [hasEntered]);
-
-  return (
-    <div ref={ref} style={!hasEntered ? { minHeight: height } : {}}>
-      {hasEntered ? children : null}
-    </div>
-  );
+function LazySection({ children }) {
+  return <>{children}</>;
 }
 
 // --- Projects Data System ---
@@ -585,7 +550,8 @@ export default function App() {
       gestureOrientation: 'vertical',
       smoothWheel: true,
       wheelMultiplier: 1,
-      touchMultiplier: 1.5,
+      smoothTouch: false,
+      syncTouch: false,
     });
 
     function raf(time) {
