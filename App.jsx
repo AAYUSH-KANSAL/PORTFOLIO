@@ -426,8 +426,17 @@ function ProjectCard({ project, isVisible, index }) {
   );
 }
 
-// --- Main App Component ---
 export default function App() {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const mql = window.matchMedia('(max-width: 768px)');
+    setIsMobile(mql.matches);
+    const listener = (e) => setIsMobile(e.matches);
+    mql.addEventListener('change', listener);
+    return () => mql.removeEventListener('change', listener);
+  }, []);
+
   // About Section Ref, Visibility & Tilt State
   const aboutRef = useRef(null);
   const [aboutVisible, setAboutVisible] = useState(false);
@@ -606,6 +615,8 @@ export default function App() {
 
   // Handle High-Performance Cursor Glow & 12-point Trail
   useEffect(() => {
+    if (isMobile) return;
+
     const handleMouseMove = (e) => {
       mouseRef.current = { x: e.clientX, y: e.clientY };
     };
@@ -676,11 +687,12 @@ export default function App() {
       document.body.removeEventListener('mouseleave', handleMouseLeave);
       cancelAnimationFrame(animationFrameId);
     };
-  }, []);
+  }, [isMobile]);
 
   // Generate Floating Particles
   useEffect(() => {
-    const generated = Array.from({ length: 30 }).map((_, i) => ({
+    const count = isMobile ? 10 : 30;
+    const generated = Array.from({ length: count }).map((_, i) => ({
       id: i,
       left: Math.random() * 100,
       delay: Math.random() * 8,
@@ -688,7 +700,7 @@ export default function App() {
       size: 2 + Math.random() * 3,
     }));
     setParticles(generated);
-  }, []);
+  }, [isMobile]);
 
   // Stats Animation on Scroll Viewport Intersection
   useEffect(() => {
@@ -1045,9 +1057,35 @@ export default function App() {
             </div>
           </div>
 
-          {/* Right Content — Spline 3D */}
+          {/* Right Content — Spline 3D or Mobile Fallback */}
           <div className="hero-visual">
-            <SplineScene scene="https://prod.spline.design/FhAwJs2nFumZp1pV/scene.splinecode" />
+            {isMobile ? (
+              <div className="mobile-spline-fallback">
+                <div className="mobile-fallback-glow"></div>
+                <div className="mobile-fallback-character">
+                  <svg viewBox="0 0 200 200" className="mobile-avatar-svg">
+                    <defs>
+                      <linearGradient id="cyberGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="var(--accent-cyan)" />
+                        <stop offset="50%" stopColor="var(--accent-purple)" />
+                        <stop offset="100%" stopColor="var(--accent-cyan)" />
+                      </linearGradient>
+                      <filter id="cyberGlow" x="-20%" y="-20%" width="140%" height="140%">
+                        <feGaussianBlur stdDeviation="10" result="blur" />
+                        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                      </filter>
+                    </defs>
+                    <circle cx="100" cy="100" r="35" fill="url(#cyberGradient)" opacity="0.8" filter="url(#cyberGlow)" className="pulse-core" />
+                    <circle cx="100" cy="100" r="65" fill="none" stroke="url(#cyberGradient)" strokeWidth="1.5" strokeDasharray="30 15" className="spin-ring-outer" />
+                    <circle cx="100" cy="100" r="50" fill="none" stroke="var(--accent-cyan)" strokeWidth="1" strokeDasharray="5 10" className="spin-ring-inner" />
+                    <circle cx="100" cy="40" r="4" fill="var(--accent-cyan)" filter="url(#cyberGlow)" className="orbit-dot-1" />
+                    <circle cx="100" cy="160" r="4" fill="var(--accent-purple)" filter="url(#cyberGlow)" className="orbit-dot-2" />
+                  </svg>
+                </div>
+              </div>
+            ) : (
+              <SplineScene scene="https://prod.spline.design/FhAwJs2nFumZp1pV/scene.splinecode" />
+            )}
           </div>
         </div>
 
