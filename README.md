@@ -2,7 +2,7 @@
 
 A modern, high-performance personal portfolio website built with **React**, **Vite**, **Spline 3D**, and **Lenis**. Featuring an interactive 3D robot hero, premium glassmorphism interfaces, fluid custom scroll physics, dynamic 12-point cursor trails, and stabilized responsive layouts.
 
-Live Demo: [portfolio-woad-six-76.vercel.app](https://portfolio-woad-six-76.vercel.app/)
+Live Demo: [portfolio-beta-bice-sqyyghflsz.vercel.app](https://portfolio-beta-bice-sqyyghflsz.vercel.app/)
 
 ---
 

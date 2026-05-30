@@ -187,7 +187,7 @@ const projectsData = [
     isFeatured: false,
     description: 'A premium, interactive digital portfolio showcasing personal projects, interactive 3D assets, and custom design tokens built with hardware-accelerated animations.',
     techStack: ['React', 'Spline 3D', 'CSS3', 'Vite'],
-    liveDemo: 'https://portfolio-woad-six-76.vercel.app/',
+    liveDemo: 'https://portfolio-beta-bice-sqyyghflsz.vercel.app/',
     github: 'https://github.com/AAYUSH-KANSAL/PORTFOLIO',
     features: [
       'Interactive 3D Spline robot character',
