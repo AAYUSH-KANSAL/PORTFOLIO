@@ -3461,6 +3461,13 @@ body:hover .cursor-glow {
         height: 380px;
     }
 
+    .spline-wrapper {
+        transform: translateX(45px) !important;
+        width: 130% !important;
+        height: 110% !important;
+        left: -15% !important;
+    }
+
     /* About skills grid */
     .about-stats-grid {
         grid-template-columns: 1fr;
