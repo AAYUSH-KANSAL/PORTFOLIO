@@ -2,22 +2,22 @@
    DESIGN TOKENS & CSS VARIABLES
    ============================================ */
 :root {
-    --bg-primary: #09090b;
-    --bg-secondary: #111113;
-    --bg-card: #18181b;
-    --bg-elevated: #1e1e22;
-    --text-primary: #fafafa;
-    --text-secondary: #a1a1aa;
-    --text-muted: #71717a;
-    --accent: #8b5cf6;
-    --accent-light: #a78bfa;
-    --accent-dark: #7c3aed;
-    --accent-glow: rgba(139, 92, 246, 0.3);
-    --gradient-1: linear-gradient(135deg, #8b5cf6, #ec4899);
-    --gradient-2: linear-gradient(135deg, #06b6d4, #8b5cf6);
-    --gradient-3: linear-gradient(135deg, #8b5cf6, #f59e0b);
-    --border: rgba(255, 255, 255, 0.06);
-    --border-hover: rgba(255, 255, 255, 0.12);
+    --bg-primary: #030303;
+    --bg-secondary: #0a0a0c;
+    --bg-card: #121215;
+    --bg-elevated: #18181c;
+    --text-primary: #ffffff;
+    --text-secondary: #cbd5e1;
+    --text-muted: #64748b;
+    --accent: #00f2fe;
+    --accent-light: #38bdf8;
+    --accent-dark: #4facfe;
+    --accent-glow: rgba(0, 242, 254, 0.22);
+    --gradient-1: linear-gradient(135deg, #00f2fe 0%, #a855f7 100%);
+    --gradient-2: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+    --gradient-3: linear-gradient(135deg, #00f2fe 0%, #ec4899 100%);
+    --border: rgba(255, 255, 255, 0.05);
+    --border-hover: rgba(0, 242, 254, 0.15);
     --radius-sm: 8px;
     --radius-md: 12px;
     --radius-lg: 16px;
@@ -1587,9 +1587,18 @@ body:hover .cursor-glow {
 }
 
 .about-bio {
-    font-size: 1.1rem;
-    line-height: 1.7;
+    font-size: 1.25rem;
+    line-height: 1.8;
     color: var(--text-secondary);
+}
+
+.bio-highlight {
+    font-weight: 700;
+    color: var(--text-primary);
+    background: var(--gradient-1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: inline-block;
 }
 
 .services-grid {

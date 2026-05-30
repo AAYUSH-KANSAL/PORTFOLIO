@@ -1196,7 +1196,7 @@ export default function App() {
             {/* Right Text */}
             <div className="about-text reveal-slide-right">
               <p className="about-bio">
-                I am a developer who believes that beautiful designs deserve exceptional code. I specialize in bridging the gap between design systems and complex interactive layouts. By blending WebGL, Spline, and custom React architectures, I bring flat pixels into responsive, three-dimensional reality.
+                I am a developer who believes that <strong className="bio-highlight">beautiful designs</strong> deserve <strong className="bio-highlight">exceptional code</strong>. I specialize in bridging the gap between design systems and complex interactive layouts. By blending <strong className="bio-highlight">WebGL</strong>, <strong className="bio-highlight">Spline</strong>, and <strong className="bio-highlight">custom React architectures</strong>, I bring flat pixels into <strong className="bio-highlight">responsive, three-dimensional reality</strong>.
               </p>
 
               {/* Skills Matrix Tabs */}
@@ -1762,8 +1762,8 @@ export default function App() {
       <svg style={{ width: 0, height: 0, position: 'absolute' }}>
         <defs>
           <linearGradient id="skillGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#8b5cf6" />
-            <stop offset="100%" stopColor="#ec4899" />
+            <stop offset="0%" stopColor="#00f2fe" />
+            <stop offset="100%" stopColor="#a855f7" />
           </linearGradient>
         </defs>
       </svg>
