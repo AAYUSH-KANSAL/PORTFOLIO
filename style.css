@@ -1622,7 +1622,8 @@ body:hover .cursor-glow {
 .about-bio {
     font-size: 1.25rem;
     line-height: 1.8;
-    color: var(--text-secondary);
+    color: var(--text-primary);
+    font-weight: 700;
     position: relative;
     z-index: 1;
 }
@@ -3536,6 +3537,8 @@ body:hover .cursor-glow {
         text-justify: inter-word;
         font-size: 1.15rem;
         line-height: 1.75;
+        font-weight: 700;
+        color: var(--text-primary);
     }
 
     .hero-title {
