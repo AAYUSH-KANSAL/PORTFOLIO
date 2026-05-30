@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import Lenis from 'lenis';
+import 'lenis/dist/lenis.css';
 import './style.css';
 
 // Lazy load the Spline runtime to optimize bundle size
@@ -544,6 +545,7 @@ export default function App() {
   // Initialize Lenis Smooth Scroll
   useEffect(() => {
     const lenis = new Lenis({
+      autoRaf: true,
       duration: 1.2,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       orientation: 'vertical',
@@ -553,13 +555,6 @@ export default function App() {
       smoothTouch: false,
       syncTouch: false,
     });
-
-    function raf(time) {
-      lenis.raf(time);
-      requestAnimationFrame(raf);
-    }
-
-    requestAnimationFrame(raf);
 
     // Keep active section and navbar scroll state synced with Lenis scroll events
     lenis.on('scroll', (e) => {
