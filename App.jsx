@@ -191,8 +191,8 @@ const projectsData = [
     isFeatured: false,
     description: 'A premium, interactive digital portfolio showcasing personal projects, interactive 3D assets, and custom design tokens built with hardware-accelerated animations.',
     techStack: ['React', 'Spline 3D', 'CSS3', 'Vite'],
-    liveDemo: '',
-    github: '',
+    liveDemo: 'https://github.com/AAYUSH-KANSAL/PORTFOLIO',
+    github: 'https://github.com/AAYUSH-KANSAL/PORTFOLIO',
     features: [
       'Interactive 3D Spline robot character',
       'High-performance scroll-driven animations',
