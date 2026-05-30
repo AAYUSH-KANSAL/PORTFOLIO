@@ -1586,10 +1586,45 @@ body:hover .cursor-glow {
     gap: 24px;
 }
 
+.about-bio-card {
+    background: rgba(255, 255, 255, 0.015);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s var(--ease-out);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.about-bio-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(0, 242, 254, 0.04), rgba(168, 85, 247, 0.04));
+    opacity: 0;
+    transition: opacity 0.4s var(--ease-out);
+    z-index: 0;
+}
+
+.about-bio-card:hover::before {
+    opacity: 1;
+}
+
+.about-bio-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(0, 242, 254, 0.25);
+    box-shadow: 0 12px 40px rgba(0, 242, 254, 0.08);
+}
+
 .about-bio {
     font-size: 1.25rem;
     line-height: 1.8;
     color: var(--text-secondary);
+    position: relative;
+    z-index: 1;
 }
 
 .bio-highlight {
@@ -3487,6 +3522,13 @@ body:hover .cursor-glow {
     .section-header,
     .footer-container {
         padding: 0 16px !important;
+    }
+
+    .about-bio-card {
+        padding: 22px 20px;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        background: rgba(18, 18, 22, 0.96) !important;
     }
 
     .about-bio {
