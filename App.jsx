@@ -238,23 +238,23 @@ const projectsData = [
     subBrand: 'DATA'
   },
   {
-    id: 'resuparse-ai',
-    title: 'ResuParse AI',
+    id: 'ayush-namkeen-corner',
+    title: 'Ayush Namkeen Corner',
     isFeatured: false,
-    description: 'An AI-powered resume parsing and analysis tool that extracts candidate information, analyzes resumes, and provides structured insights for recruitment workflows.',
-    techStack: ['Python', 'Streamlit', 'LangChain', 'Groq', 'RAG'],
-    liveDemo: 'https://resuparse.streamlit.app/',
-    github: 'https://github.com/AAYUSH-KANSAL/RESUPARSE-AI',
+    description: 'A dynamic business website for Ayush Namkeen Corner, showcasing a wide variety of snacks with an interactive catalog and responsive design.',
+    techStack: ['HTML', 'CSS', 'JavaScript'],
+    liveDemo: 'https://ayushnamkeencorner.netlify.app/',
+    github: 'https://github.com/AAYUSH-KANSAL/AYUSH-NAMKEEN-CORNER',
     features: [
-      'Resume parsing',
-      'Information extraction',
-      'AI-powered analysis',
-      'Structured candidate insights',
-      'Recruitment workflow optimization'
+      'Interactive product catalog',
+      'Responsive UI design',
+      'Modern aesthetics',
+      'AJAX contact form',
+      'Dynamic animations'
     ],
     accent: '#ec4899',
-    brand: 'RESUME PARSER',
-    subBrand: 'AI.PARSER'
+    brand: 'AYUSH NAMKEEN',
+    subBrand: 'CORNER'
   }
 ];
 
